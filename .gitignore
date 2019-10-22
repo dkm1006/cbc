@@ -106,3 +106,8 @@ venv.bak/
 # IDEs
 .idea
 .vscode
+
+# Misc
+.DS_Store 
+/data
+/checkpoints

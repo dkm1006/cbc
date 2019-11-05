@@ -108,6 +108,8 @@ venv.bak/
 .vscode
 
 # Misc
-.DS_Store 
-/data
+.DS_Store
+/tutorials_coursera
+/data/raw
+/data/secrets
 /checkpoints

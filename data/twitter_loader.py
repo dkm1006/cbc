@@ -25,8 +25,8 @@ def load_original_datasets():
     # Preprocess 1st Dataset
     NAACL_SRW = pd.read_csv(RAW_DATA_DIR / 'NAACL_SRW_2016.csv',
                             index_col=0, header=None,
-                            names=['TweetID', 'RawLabel'])
-    NAACL_SRW['Label'] = NAACL_SRW['RawLabel'].isin(BULLYING_LABELS)
+                            names=['id', 'RawLabel'])
+    NAACL_SRW['label'] = NAACL_SRW['RawLabel'].isin(BULLYING_LABELS)
 
     # Preprocess 2nd Dataset
     NLP_CSS = pd.read_csv(RAW_DATA_DIR / 'NLP+CSS_2016.csv',
@@ -37,16 +37,16 @@ def load_original_datasets():
     NLP_CSS = NLP_CSS.dropna(axis=1, how='any')
     column_names = ['Expert', 'Amateur_0', 'Amateur_1', 'Amateur_2']
     NLP_CSS.columns = column_names
-    NLP_CSS.index = NLP_CSS.index.rename('TweetID')
+    NLP_CSS.index = NLP_CSS.index.rename('id')
     # Create a label from majority voting of the labellers
-    NLP_CSS['Label'] = (
+    NLP_CSS['label'] = (
         NLP_CSS.Expert.isin(BULLYING_LABELS) * 2 +
         sum(NLP_CSS[name].isin(BULLYING_LABELS) for name in column_names[1:])
     ) > 2
 
     # Concatenate the cleaned dataframes
     df = NLP_CSS.append(NAACL_SRW, sort=False)
-    df['Text'] = pd.Series(dtype='object')
+    df['text'] = pd.Series(dtype='object')
     return df
 
 
@@ -70,7 +70,7 @@ def get_tweets(api, df, ids, make_backup=False, file_name='twitter.csv'):
         texts = pd.Series(
             {tweet.id: getattr(tweet, 'text', None) for tweet in tweets}
         )
-        df['Text'].update(texts)
+        df['text'].update(texts)
 
         if make_backup:
             # Save json for backup
@@ -85,7 +85,7 @@ def get_tweets(api, df, ids, make_backup=False, file_name='twitter.csv'):
 
     if file_name:
         # Save to CSV if a file_name is supplied
-        df[['Text', 'Label']].to_csv(Path('data') / file_name)
+        df[['text', 'label']].to_csv(Path('data') / file_name)
 
     return df
 
@@ -93,10 +93,10 @@ def get_tweets(api, df, ids, make_backup=False, file_name='twitter.csv'):
 def load_dataset():
     df = pd.read_csv(Path('data') / 'twitter.csv', index_col=0)
     df = df.dropna()
-    df.Label = df.Label.astype(bool)
+    df.label = df.label.astype(bool)
     return df
 
-# Tokenize
+# TODO: Tokenize
 # Usernames: <USER_TOKEN>
 # URLs: <URL_TOKEN>
 

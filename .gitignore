@@ -112,4 +112,5 @@ venv.bak/
 /tutorials_coursera
 /data/raw
 /data/secrets
+/data/*.csv
 /checkpoints

@@ -1,10 +1,17 @@
-from data import (
-    twitter_loader, formspring_loader, wikipedia_loader, jigsaw_loader
-)
+from importlib import import_module
+from pathlib import Path
 
-datasets = {
-    'twitter': twitter_loader.load_dataset(),
-    'formspring': formspring_loader.load_dataset(),
-    'wikipedia': wikipedia_loader.load_dataset(),
-    'jigsaw': jigsaw_loader.load_dataset()
-}
+# Imports all loader modules. New modules are registered automatically,
+# as long as they adhere to the naming convention *_loader.py
+loaders = {}
+DIR_NAME = __name__ if __name__ != "__main__" else 'data'
+module_paths = Path(DIR_NAME).glob('*_loader.py')
+for path in module_paths:
+    name = path.stem.split('_')[0]
+    import_module(f'{DIR_NAME}.{path.stem}')
+    loaders[name] = locals()[f'{path.stem}']
+
+
+def load(dataset):
+    """Loads the preprocessed dataset for the given platform"""
+    return loaders[dataset].load_dataset()

@@ -15,13 +15,13 @@ def load_original_dataset():
     assert (labels[labels.columns[:-1]].any(axis=1) == labels['attack']).all()
     comments['label'] = (labels.mean(level=0).attack >= 0.5)
     comments.index = 'wi' + comments.index.rename('id').astype(str)
-    data = comments[['comment', 'label']]
-    data.columns = ['text', 'label']
-    return data
+    df = comments[['comment', 'label']]
+    df.columns = ['text', 'label']
+    return df
 
 # TODO: Deal with NEWLINE_TOKEN
 
 
 def load_dataset():
-    data = pd.read_csv(Path('data') / 'wikipedia.csv', index_col=0)
-    return data
+    df = pd.read_csv(Path('data') / 'wikipedia.csv', index_col=0)
+    return df

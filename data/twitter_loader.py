@@ -96,10 +96,6 @@ def load_dataset():
     df.label = df.label.astype(bool)
     return df
 
-# TODO: Tokenize
-# Usernames: <USER_TOKEN>
-# URLs: <URL_TOKEN>
-
 
 if __name__ == "__main__":
     api = authenticate_with_twitter()

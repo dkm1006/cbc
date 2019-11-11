@@ -106,3 +106,12 @@ venv.bak/
 # IDEs
 .idea
 .vscode
+
+# Misc
+.DS_Store
+/models/saved/
+/tutorials_coursera
+/data/raw
+/data/secrets
+/data/*.csv
+/checkpoints

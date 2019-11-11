@@ -1,18 +1,19 @@
 import tensorflow as tf
-from tensorflow.keras import layers
+from tensorflow.keras.layers import (
+    Embedding, Bidirectional, LSTM, Dropout, Dense
+)
 import config
-import data
-import preprocessing
+
 
 model = tf.keras.Sequential(
     [
-        layers.Embedding(input_dim=config.VOCAB_SIZE,
-                         output_dim=config.EMBEDDING_DIM,
-                         input_length=config.MAX_LENGTH),
-        layers.Bidirectional(layers.LSTM(128)),
-        layers.Dropout(0.5),
-        layers.Dense(64, activation="relu"),
-        layers.Dense(1, activation="sigmoid"),
+        Embedding(input_dim=config.VOCAB_SIZE,
+                  output_dim=config.EMBEDDING_DIM,
+                  input_length=config.MAX_LENGTH),
+        Bidirectional(LSTM(128)),
+        Dropout(0.5),
+        Dense(64, activation="relu"),
+        Dense(1, activation="sigmoid"),
     ]
 )
 
@@ -25,6 +26,8 @@ model.compile(
 
 
 if __name__ == "__main__":
+    import data
+    import preprocessing
     df = preprocessing.preprocess(data.load("twitter"))
     train_df, validation_df = preprocessing.train_val_split(df)
     tokenizer = preprocessing.get_tokenizer(train_df)

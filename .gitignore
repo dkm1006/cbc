@@ -109,6 +109,7 @@ venv.bak/
 
 # Misc
 .DS_Store
+/models/saved/
 /tutorials_coursera
 /data/raw
 /data/secrets

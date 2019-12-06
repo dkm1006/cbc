@@ -1,6 +1,7 @@
 import math
 import tensorflow as tf
 from tensorflow.keras.callbacks import LearningRateScheduler
+import tensorflow.keras.backend as kb
 
 
 def create_learn_rate_scheduler(max_learn_rate=5e-5,
@@ -21,3 +22,16 @@ def create_learn_rate_scheduler(max_learn_rate=5e-5,
 
     learn_rate_scheduler = LearningRateScheduler(calculate_learn_rate)
     return learn_rate_scheduler
+
+
+def adjusted_sum(x, a=0, b=1):
+    return kb.sum(kb.round(kb.clip(x, a, b)))
+
+
+def f1_score(y_true, y_pred):
+    true_positives = adjusted_sum(y_true * y_pred)
+    real_positives = adjusted_sum(y_true)
+    predicted_positives = adjusted_sum(y_pred)
+    precision = true_positives / (predicted_positives + kb.epsilon())
+    recall = true_positives / (real_positives + kb.epsilon())
+    return 2 * (precision * recall) / (precision + recall + kb.epsilon())

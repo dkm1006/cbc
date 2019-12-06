@@ -7,8 +7,8 @@ import tweepy
 
 from data.secrets import twitter_config as secrets
 
-
-RAW_DATA_DIR = Path('data/raw/Twitter-Waseem-2016')
+DATA_DIR = Path('data')
+RAW_DATA_DIR = DATA_DIR / 'raw'
 BULLYING_LABELS = {'racism', 'sexism', 'both'}
 
 
@@ -22,14 +22,15 @@ def authenticate_with_twitter():
 
 def load_original_datasets():
     """Returns a preprocessed DataFrame from the original datasets"""
+    WASEEM_DIR = RAW_DATA_DIR / 'Twitter-Waseem-2016'
     # Preprocess 1st Dataset
-    NAACL_SRW = pd.read_csv(RAW_DATA_DIR / 'NAACL_SRW_2016.csv',
+    NAACL_SRW = pd.read_csv(WASEEM_DIR / 'NAACL_SRW_2016.csv',
                             index_col=0, header=None,
                             names=['id', 'RawLabel'])
     NAACL_SRW['label'] = NAACL_SRW['RawLabel'].isin(BULLYING_LABELS)
 
     # Preprocess 2nd Dataset
-    NLP_CSS = pd.read_csv(RAW_DATA_DIR / 'NLP+CSS_2016.csv',
+    NLP_CSS = pd.read_csv(WASEEM_DIR / 'NLP+CSS_2016.csv',
                           sep='\t', index_col=0)
     NLP_CSS = NLP_CSS[
         NLP_CSS.index.isin(set(NLP_CSS.index) - set(NAACL_SRW.index))
@@ -46,15 +47,15 @@ def load_original_datasets():
 
     # Concatenate the cleaned dataframes
     df = NLP_CSS.append(NAACL_SRW, sort=False)
-    df['text'] = pd.Series(dtype='object')
     return df
 
 
-def get_tweets(api, df, ids, make_backup=False, file_name='twitter.csv'):
+def get_tweets(api, ids, make_backup=False):
     """
     Uses the GET statuses/lookup to get the Tweet objects for a list of ids
     """
     i = 0
+    texts = pd.Series({str(id): '' for id in ids}, dtype='object')
     while i < len(ids):
         try:
             tweets = api.statuses_lookup(ids[i:i+100],
@@ -67,10 +68,10 @@ def get_tweets(api, df, ids, make_backup=False, file_name='twitter.csv'):
             continue
 
         # Extract texts and update DataFrame
-        texts = pd.Series(
-            {tweet.id: getattr(tweet, 'text', None) for tweet in tweets}
+        new_texts = pd.Series(
+            {str(tweet.id): getattr(tweet, 'text', None) for tweet in tweets}
         )
-        df['text'].update(texts)
+        texts.update(new_texts)
 
         if make_backup:
             # Save json for backup
@@ -83,22 +84,50 @@ def get_tweets(api, df, ids, make_backup=False, file_name='twitter.csv'):
         # Increment counter
         i += 100
 
-    if file_name:
-        # Save to CSV if a file_name is supplied
-        df[['text', 'label']].to_csv(Path('data') / file_name)
-
-    return df
+    return texts
 
 
-def load_dataset():
-    df = pd.read_csv(Path('data') / 'twitter.csv', index_col=0)
+def load_dataset(file_name='twitter.csv'):
+    df = pd.read_csv(DATA_DIR / file_name, index_col=0)
     df = df.dropna()
     df.label = df.label.astype(bool)
     return df
+
+
+def load_sui_dataset():
+    # No overlap with the other datasets
+    SUI_DIR = RAW_DATA_DIR / 'twitterbullyingV3'
+    columns = {
+        'id': str,
+        'user': str,
+        'label': bool,
+        'type': 'category',
+        'form': 'category',
+        'teasing': bool,
+        'role': 'category',
+        'emotion': 'category'
+    }
+    converters = {
+        'label': lambda v: True if v == 'y' else False,
+        'teasing': lambda v: True if v == 'y' else False
+    }
+    SUI = pd.read_csv(SUI_DIR / 'data.csv',
+                      names=columns.keys(),
+                      index_col=0,
+                      dtype=columns,
+                      converters=converters)
+    SUI.index = SUI.index.astype(str)
+    SUI = SUI[~SUI.index.duplicated()]
+
+    # TODO: Take into account the role. Only take the attacker,
+    # otherwise we get stuff like 'Bully' classified as bullying
+    return SUI
 
 
 if __name__ == "__main__":
     api = authenticate_with_twitter()
     df = load_original_datasets()
     list_of_ids = list(df.index)
-    df = get_tweets(api, df, list_of_ids)
+    df['text'] = get_tweets(api, list_of_ids)
+    # Save to CSV if a file_name is supplied
+    df[['text', 'label']].to_csv(DATA_DIR / 'twitter-clean.csv')

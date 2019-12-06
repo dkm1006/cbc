@@ -4,8 +4,10 @@ import bert
 from bert.tokenization import FullTokenizer
 from tensorflow import keras
 
+from helper import create_learn_rate_scheduler, f1_score
+
 MAX_SEQ_LEN = 128
-ADAPTER_SIZE = 128  # Use None for Fine-Tuning
+ADAPTER_SIZE = None  # Use None for Fine-Tuning
 MODEL_NAME = "albert_base"
 MODEL_URL = 'https://tfhub.dev/google/albert_base/2?tf-hub-format=compressed'
 CHECKPOINT_DIR = 'checkpoints'
@@ -45,7 +47,8 @@ output = bert_layer(input_ids)  # output:[batch_size, MAX_SEQ_LEN, hidden_size]
 # https://github.com/kpe/bert-for-tf2/blob/master/examples/gpu_movie_reviews.ipynb
 # The Lambda layer just takes one output from the sequence
 cls_out = keras.layers.Lambda(lambda seq: seq[:, 0, :])(output)
-cls_out = keras.layers.Dropout(0.5)(cls_out)
+# TODO: Try with more regularisation
+# cls_out = keras.layers.Dropout(0.5)(cls_out)
 logits = keras.layers.Dense(units=256, activation='relu')(cls_out)
 logits = keras.layers.Dropout(0.5)(logits)
 # NOTE: Alternative to the Lambda layer
@@ -54,7 +57,8 @@ output = keras.layers.Dense(units=1, activation='sigmoid')(logits)
 model = keras.Model(inputs=input_ids, outputs=output)
 
 # Freeze all non-trainable layers
-freeze_layers(bert_layer, exclude=['LayerNorm', 'adapter-down', 'adapter-up'])
+freeze_layers(bert_layer, exclude=['LayerNorm'])
+# Originally from tutorial: ['LayerNorm', 'adapter-down', 'adapter-up']
 
 # Build model and load pre-trained weights
 model.build(input_shape=(None, MAX_SEQ_LEN))
@@ -63,7 +67,7 @@ bert.load_albert_weights(bert_layer, MODEL_DIR)
 model.compile(
     loss='binary_crossentropy',
     optimizer='adam',
-    metrics=['accuracy'],
+    metrics=['accuracy', f1_score],
 )
 
 model.summary()
@@ -90,12 +94,11 @@ model.summary()
 # load_stock_weights(bert_layer, bert_ckpt_file)
 
 
-TOTAL_EPOCH_COUNT = 50
+TOTAL_EPOCH_COUNT = 20
 
 if __name__ == "__main__":
     import data
     import preprocessing
-    from helper import create_learn_rate_scheduler
     df = preprocessing.preprocess(data.load("twitter"))
     train_df, validation_df = preprocessing.train_val_split(df)
     tokenizer = preprocessing.get_tokenizer(train_df)
@@ -105,7 +108,7 @@ if __name__ == "__main__":
     callbacks = [
         create_learn_rate_scheduler(max_learn_rate=1e-5,
                                     end_learn_rate=1e-7,
-                                    warmup_epoch_count=20,
+                                    warmup_epoch_count=10,
                                     total_epoch_count=TOTAL_EPOCH_COUNT),
         keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True),
         tensorboard_callback
@@ -115,8 +118,8 @@ if __name__ == "__main__":
               batch_size=16,
               shuffle=True,
               epochs=TOTAL_EPOCH_COUNT,
-              callbacks=[])
+              callbacks=callbacks)
     model.save_weights('./bert_cyberbullying.h5', overwrite=True)
 
     # To load weights for a compiled model
-    model.load_weights("bert_cyberbullying.h5")
+    # model.load_weights("bert_cyberbullying.h5")

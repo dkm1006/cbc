@@ -1,5 +1,6 @@
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+from bert.tokenization import FullTokenizer as BertTokenizer
 import config
 
 
@@ -182,8 +183,8 @@ class BasicTokenizer:
 
 class WordpieceTokenizer:
     """Runs WordPiece tokenziation."""
-
-    def __init__(self, vocab, unk_token="[UNK]", max_input_chars_per_word=200):  # TODO: Change unk_token to oov_token='<OOV>'
+    # TODO: Change unk_token to oov_token='<OOV>'
+    def __init__(self, vocab, unk_token="[UNK]", max_input_chars_per_word=200):
         self.vocab = vocab
         self.unk_token = unk_token
         self.max_input_chars_per_word = max_input_chars_per_word

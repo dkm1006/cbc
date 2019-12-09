@@ -1,8 +1,14 @@
 import math
+from datetime import datetime
 import tensorflow as tf
-from tensorflow.keras.callbacks import LearningRateScheduler
+from tensorflow.keras.callbacks import (
+    LearningRateScheduler, TensorBoard, EarlyStopping
+)
 import tensorflow.keras.backend as kb
 
+LOG_DIR = ".log/" + datetime.now().strftime("%Y%m%d-%H%M%s")
+tensorboard_callback = TensorBoard(log_dir=LOG_DIR)
+early_stopping_callback = EarlyStopping(patience=20, restore_best_weights=True)
 
 def create_learn_rate_scheduler(max_learn_rate=5e-5,
                                 end_learn_rate=1e-7,

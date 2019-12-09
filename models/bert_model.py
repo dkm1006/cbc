@@ -1,10 +1,6 @@
-from datetime import datetime
-
 import bert
-from bert.tokenization import FullTokenizer
 from tensorflow import keras
 
-from helper import create_learn_rate_scheduler, f1_score
 
 MAX_SEQ_LEN = 128
 ADAPTER_SIZE = None  # Use None for Fine-Tuning
@@ -12,9 +8,6 @@ MODEL_NAME = "albert_base"
 MODEL_URL = 'https://tfhub.dev/google/albert_base/2?tf-hub-format=compressed'
 CHECKPOINT_DIR = 'checkpoints'
 MODEL_DIR = bert.fetch_tfhub_albert_model(MODEL_NAME, CHECKPOINT_DIR)
-
-LOG_DIR = ".log/" + datetime.now().strftime("%Y%m%d-%H%M%s")
-tensorboard_callback = keras.callbacks.TensorBoard(log_dir=LOG_DIR)
 
 
 def flatten_layers(root_layer):
@@ -64,14 +57,6 @@ freeze_layers(bert_layer, exclude=['LayerNorm'])
 model.build(input_shape=(None, MAX_SEQ_LEN))
 bert.load_albert_weights(bert_layer, MODEL_DIR)
 
-model.compile(
-    loss='binary_crossentropy',
-    optimizer='adam',
-    metrics=['accuracy', f1_score],
-)
-
-model.summary()
-
 
 # Alternative for loading weights from checkpoint file
 
@@ -92,34 +77,3 @@ model.summary()
 
 # Load the pre-trained model weights
 # load_stock_weights(bert_layer, bert_ckpt_file)
-
-
-TOTAL_EPOCH_COUNT = 20
-
-if __name__ == "__main__":
-    import data
-    import preprocessing
-    df = preprocessing.preprocess(data.load("twitter"))
-    train_df, validation_df = preprocessing.train_val_split(df)
-    tokenizer = preprocessing.get_tokenizer(train_df)
-    train_padded, validation_padded = preprocessing.tokenize(tokenizer,
-                                                             train_df,
-                                                             validation_df)
-    callbacks = [
-        create_learn_rate_scheduler(max_learn_rate=1e-5,
-                                    end_learn_rate=1e-7,
-                                    warmup_epoch_count=10,
-                                    total_epoch_count=TOTAL_EPOCH_COUNT),
-        keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True),
-        tensorboard_callback
-    ]
-    model.fit(x=train_padded, y=train_df.label.to_numpy(),
-              # validation_split=0.1,
-              batch_size=16,
-              shuffle=True,
-              epochs=TOTAL_EPOCH_COUNT,
-              callbacks=callbacks)
-    model.save_weights('./bert_cyberbullying.h5', overwrite=True)
-
-    # To load weights for a compiled model
-    # model.load_weights("bert_cyberbullying.h5")

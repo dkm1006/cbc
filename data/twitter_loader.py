@@ -5,7 +5,7 @@ import time
 import pandas as pd
 import tweepy
 
-from data.secrets import twitter_config as secrets
+import secrets
 
 DATA_DIR = Path('data')
 RAW_DATA_DIR = DATA_DIR / 'raw'
@@ -14,8 +14,10 @@ BULLYING_LABELS = {'racism', 'sexism', 'both'}
 
 def authenticate_with_twitter():
     # Authenticate
-    auth = tweepy.OAuthHandler(secrets.API_KEY, secrets.API_SECRET_KEY)
-    auth.set_access_token(secrets.ACCESS_TOKEN, secrets.ACCESS_TOKEN_SECRET)
+    auth = tweepy.OAuthHandler(secrets.TWITTER_API_KEY,
+                               secrets.TWITTER_API_SECRET_KEY)
+    auth.set_access_token(secrets.TWITTER_ACCESS_TOKEN,
+                          secrets.TWITTER_ACCESS_TOKEN_SECRET)
     api = tweepy.API(auth)
     return api
 

@@ -10,6 +10,7 @@ LOG_DIR = ".log/" + datetime.now().strftime("%Y%m%d-%H%M%s")
 tensorboard_callback = TensorBoard(log_dir=LOG_DIR)
 early_stopping_callback = EarlyStopping(patience=20, restore_best_weights=True)
 
+
 def create_learn_rate_scheduler(max_learn_rate=5e-5,
                                 end_learn_rate=1e-7,
                                 warmup_epoch_count=10,

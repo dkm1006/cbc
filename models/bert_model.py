@@ -41,9 +41,9 @@ output = bert_layer(input_ids)  # output:[batch_size, MAX_SEQ_LEN, hidden_size]
 # The Lambda layer just takes one output from the sequence
 cls_out = keras.layers.Lambda(lambda seq: seq[:, 0, :])(output)
 # TODO: Try with more regularisation
-# cls_out = keras.layers.Dropout(0.5)(cls_out)
+# cls_out = keras.layers.Dropout(rate=0.5)(cls_out)
 logits = keras.layers.Dense(units=256, activation='relu')(cls_out)
-logits = keras.layers.Dropout(0.5)(logits)
+logits = keras.layers.Dropout(rate=0.2)(logits)
 # NOTE: Alternative to the Lambda layer
 # bgru_layer = keras.layers.Bidirectional(keras.layers.GRU(64))(output)
 output = keras.layers.Dense(units=1, activation='sigmoid')(logits)

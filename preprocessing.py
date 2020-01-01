@@ -24,11 +24,11 @@ def preprocess(df):
     return df
 
 
-def train_val_split(df):
+def train_val_split(df, **kwargs):
     """Split the DataFrame in training and validation set"""
-    num_training_samples = int(len(df) * config.TRAINING_PORTION)
-    train_df = df[:num_training_samples]
-    validation_df = df[num_training_samples:]
+    num_split = int(len(df) * config.TRAINING_PORTION)
+    shuffled = df.sample(frac=1, **kwargs)
+    train_df, validation_df = shuffled[:num_split], shuffled[num_split:]
     return train_df, validation_df
 
 
@@ -212,30 +212,30 @@ class WordpieceTokenizer:
                 output_tokens.append(self.unk_token)
                 continue
 
-        is_bad = False
-        start = 0
-        sub_tokens = []
-        while start < len(chars):
-            end = len(chars)
-            cur_substr = None
-            while start < end:
-                substr = "".join(chars[start:end])
-                if start > 0:
-                    substr = "##" + six.ensure_str(substr)
-                if substr in self.vocab:
-                    cur_substr = substr
-                    break
-                end -= 1
+            is_bad = False
+            start = 0
+            sub_tokens = []
+            while start < len(chars):
+                end = len(chars)
+                cur_substr = None
+                while start < end:
+                    substr = "".join(chars[start:end])
+                    if start > 0:
+                        substr = "##" + six.ensure_str(substr)
+                    if substr in self.vocab:
+                        cur_substr = substr
+                        break
+                    end -= 1
                 if cur_substr is None:
                     is_bad = True
                     break
                 sub_tokens.append(cur_substr)
                 start = end
 
-        if is_bad:
-            output_tokens.append(self.unk_token)
-        else:
-            output_tokens.extend(sub_tokens)
+            if is_bad:
+                output_tokens.append(self.unk_token)
+            else:
+                output_tokens.extend(sub_tokens)
         return output_tokens
 
 

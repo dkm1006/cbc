@@ -22,7 +22,7 @@ callbacks = [
 
 def main(model):
     df = preprocessing.preprocess(data.load("twitter"))
-    df_train, df_validation = preprocessing.train_val_split(df)
+    df_train, df_validation = preprocessing.train_val_split(df, random_state=9)
     tokenizer = preprocessing.get_tokenizer(df_train)
     x_train, x_validation = preprocessing.tokenize(tokenizer,
                                                    df_train,

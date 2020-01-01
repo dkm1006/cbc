@@ -1,4 +1,5 @@
 import bert
+from bert.tokenization import FullTokenizer as BertTokenizer
 from tensorflow import keras
 
 
@@ -77,3 +78,19 @@ bert.load_albert_weights(bert_layer, MODEL_DIR)
 
 # Load the pre-trained model weights
 # load_stock_weights(bert_layer, bert_ckpt_file)
+
+
+if __name__ == "__main__":
+    import data
+    import preprocessing
+    file_path = 'checkpoints/wwm_uncased_L-24_H-1024_A-16/vocab.txt'
+    tokenizer = BertTokenizer(vocab_file=file_path, do_lower_case=True)
+    df = data.load("twitter")
+    df = preprocessing.preprocess(df)
+
+    # TODO: Truncate before adding CLS and SEP
+    # TODO: Anonymisation of URLs and USERNAMEs etc. is currently shitty. 
+    #       Try adding to vocab file.
+    tokens = df.text.apply(tokenizer.tokenize)
+    tokens = tokens.apply(lambda x: ['[CLS]'] + x + ['[SEP]'])
+    ids = tokens.apply(tokenizer.convert_tokens_to_ids)
